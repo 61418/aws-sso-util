@@ -175,6 +175,7 @@ The components are:
 * `account_name`
 * `account_id`
 * `account_number` (an alias for `account_id`)
+* `account_email` (the account email address returned by IAM Identity Center; an empty string if unavailable)
 * `role_name`
 * `region`
 * `short_region` (as defined above)
@@ -234,6 +235,10 @@ Finally, if you want total control over the generated profile names, you can pro
 * Short region name (see above)
 * Region index (zero-based index of what position the region is in the provided list of regions)
 * Number of regions
+
+The account email is also available to the process through the `AWS_SSO_UTIL_ACCOUNT_EMAIL` environment variable. This avoids changing the existing positional arguments passed to custom formatters.
+For example, an email such as `user@example.com` can be converted to the profile name `user` with a formatter like [`examples/profile_name_from_email.py`](../examples/profile_name_from_email.py).
+If an account has multiple Permission Sets, include the role in the generated profile name to avoid collisions.
 
 This must output a profile name to stdout and return an exit code of 0.
 If the output is the string `SKIP`, no profile will be created for that configuration.

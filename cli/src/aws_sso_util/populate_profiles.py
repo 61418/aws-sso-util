@@ -75,6 +75,7 @@ KNOWN_COMPONENTS = [
     "account_name",
     "account_id",
     "account_number",
+    "account_email",
     "role_name",
     "region",
     "short_region",
@@ -98,6 +99,7 @@ def get_formatter(include_region, region_format, no_region_format):
     def proc_kwargs(kwargs):
         kwargs["short_region"] = get_short_region(kwargs["region"])
         kwargs["account_number"] = kwargs["account_id"]
+        kwargs.setdefault("account_email", "")
         return kwargs
     if include_region == "default":
         def formatter(i, n, **kwargs):
@@ -132,8 +134,10 @@ def get_process_formatter(command):
         run_args = shell_split(command)
         for component in PROCESS_FORMATTER_ARGS:
             run_args.append(kwargs[component])
+        process_env = os.environ.copy()
+        process_env["AWS_SSO_UTIL_ACCOUNT_EMAIL"] = kwargs.get("account_email", "")
         try:
-            result = subprocess.run(shell_join(run_args), shell=True, stdout=subprocess.PIPE, check=True)
+            result = subprocess.run(shell_join(run_args), shell=True, stdout=subprocess.PIPE, check=True, env=process_env)
         except subprocess.CalledProcessError as e:
             lines = [
                 "Profile name process failed ({})".format(e.returncode)
@@ -283,7 +287,7 @@ def populate_profiles(
             profile_name_formatter = get_name_case_formatter(profile_name_account_name_case_transform, profile_name_role_name_case_transform, profile_name_formatter)
 
     try:
-        profile_name_formatter(0, 1, account_name="foo", account_id="bar", role_name="baz", region="us-east-1")
+        profile_name_formatter(0, 1, account_name="foo", account_id="bar", account_email="foo@example.com", role_name="baz", region="us-east-1")
     except Exception as e:
         raise click.UsageError("Invalid profile name format: {}".format(e))
 
@@ -351,6 +355,7 @@ def populate_profiles(
                     profile_name = profile_name_formatter(i, num_regions,
                         account_name=account_name_for_profile,
                         account_id=account["accountId"],
+                        account_email=account.get("emailAddress", ""),
                         role_name=role["roleName"],
                         region=region,
                     )
